@@ -1,0 +1,69 @@
+name: Continuous Deployment
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/ContactManager/**"
+
+env:
+  DOTNET_VERSION: "8.0.x"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        api:
+          - name: "API"
+            path: "ContactManager.Api"
+            azure_app_name: "contactmanager-api-germanywestcentral-001"
+            publish_secret: API_PUBLISH_SECRET
+        client:
+          - name: "Client"
+            path: "ContactManager.Client"
+            azure_app_name: "contactmanager-client-germanywestcentral-001"
+            publish_secret: CLIENT_PUBLISH_SECRET
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache .NET packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: |
+          dotnet restore src/ContactManager/ContactManager.sln
+
+      - name: Build projects
+        run: |
+          dotnet build src/ContactManager/ContactManager.sln
+
+      - name: Run tests
+        run: |
+          dotnet test src/ContactManager/ContactManager.sln
+
+      - name: Publish
+        run: dotnet publish src/ContactManager/${{ matrix.api.path }} --configuration Release --output ./src/ContactManager/${{ matrix.api.path }}/publish
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ matrix.api.azure_app_name }}
+          slot-name: "production"
+          publish-profile: ${{ secrets[matrix.api.publish_secret] }}
+          package: ./src/ContactManager/${{ matrix.api.path }}/publish
