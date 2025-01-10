@@ -1,3 +1,11 @@
+## Web Application
+
+- **Live Application**:  
+  [https://contactmanager-client-germanywestcentral-001.azurewebsites.net/](https://contactmanager-client-germanywestcentral-001.azurewebsites.net/)
+
+- **Api Url**:  
+[https://contactmanager-api-germanywestcentral-001.azurewebsites.net/contacts](https://contactmanager-api-germanywestcentral-001.azurewebsites.net/contacts)
+
 ## Installation Guide
 
 ### 1. **Clone the Repository**
