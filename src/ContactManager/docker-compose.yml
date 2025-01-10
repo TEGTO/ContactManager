@@ -1,0 +1,46 @@
+version: '3.4'
+
+services:
+  contactmanager.api:
+    container_name: contactmanager-api
+    image: ${DOCKER_REGISTRY-}contactmanagerapi
+    build:
+      context: .
+      dockerfile: ContactManager.Api/Dockerfile
+    ports: 
+      - 7148:8080
+    networks:
+      - contact-manager-net
+
+  contactmanager.client:
+    container_name: contactmanager-client
+    image: ${DOCKER_REGISTRY-}contactmanagerclient
+    build:
+      context: .
+      dockerfile: ContactManager.Client/Dockerfile
+    ports: 
+      - 7149:8080
+    networks:
+      - contact-manager-net
+
+  db:
+    container_name: contact-manager-db
+    image: mcr.microsoft.com/mssql/server
+    restart: always
+    environment:
+        ACCEPT_EULA: "Y"
+        SA_PASSWORD: ${SA_PASSWORD}
+    ports:
+        - 1433:1433
+    volumes:
+        - contact-manager-db-volume:/var/opt/mssql
+    networks:
+        - contact-manager-net
+
+
+volumes:
+  contact-manager-db-volume:
+
+networks:
+  contact-manager-net:
+

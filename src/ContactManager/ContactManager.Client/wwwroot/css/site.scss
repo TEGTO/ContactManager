@@ -1,0 +1,20 @@
+@import "../lib/bootstrap/dist/scss/_functions.scss";
+@import "../lib/bootstrap/dist/scss/_variables.scss";
+
+html {
+    font-size: 0.9rem; //14px
+    color: $blue-900;
+    position: relative;
+    min-height: 100%;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 1rem;
+    }
+}
+
+body {
+    margin-bottom: 60px;
+    background-color: $white;
+}

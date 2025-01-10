@@ -1,0 +1,155 @@
+﻿@{
+    ViewData["Title"] = "Contact Manager";
+}
+
+@model IEnumerable<ContactResponse>
+
+<div class="text-center">
+    <h1 class="display-4">Contact Manager</h1>
+</div>
+
+<div class="container">
+    <div class="container__upload-form">
+        <!-- Upload File Form -->
+        <form asp-controller="Home" asp-action="UploadCsv" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="fileUpload">Upload CSV File:</label>
+                <input id="fileUpload" type="file" name="file" class="form-control" accept=".csv" />
+            </div>
+            <button type="submit" class="upload-form__submit-btn btn btn-primary">Submit</button>
+        </form>
+
+        <!-- Success/Error Alerts -->
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success">
+                @TempData["Success"]
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">
+                @TempData["Error"]
+            </div>
+        }
+    </div>
+
+    <div>
+        <h3 class="mt-5">Contacts</h3>
+
+        <!-- Filter Inputs -->
+        <div class="row mb-3 gap-2">
+            <input type="text" id="filterName" placeholder="Filter by Name" class="form-control col" oninput="filterTable()">
+            <input type="text" id="filterPhone" placeholder="Filter by Phone" class="form-control col" oninput="filterTable()">
+            <input type="number" id="filterSalary" placeholder="Filter by Salary" class="form-control col" oninput="filterTable()">
+            <input type="date" id="filterDateOfBirth" placeholder="Filter by Date of Birth" class="form-control col" oninput="filterTable()">
+            <select id="filterMarried" class="form-control col" onchange="filterTable()">
+                <option value="">Marital Status</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+            </select>
+        </div>
+
+        <table id="contactsTable" class="contacts-table table table-striped mt-3">
+            <thead>
+                <tr>
+                    <th class="clickable" onclick="sortTable(0)">Name <i class="fa fa-fw fa-sort"></i></th>
+                    <th class="clickable" onclick="sortTable(1)">Date Of Birth <i class="fa fa-fw fa-sort"></i></th>
+                    <th class="clickable" onclick="sortTable(2)">Married <i class="fa fa-fw fa-sort"></i></th>
+                    <th class="clickable" onclick="sortTable(3)">Phone <i class="fa fa-fw fa-sort"></i></th>
+                    <th class="clickable" onclick="sortTable(4)">Salary <i class="fa fa-fw fa-sort"></i></th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var contact in Model)
+                {
+                    <tr>
+                        <td>@contact.Name</td>
+                        <td>@contact.DateOfBirth.ToString("yyyy-MM-dd")</td>
+                        <td>@(contact.Married ? "Yes" : "No")</td>
+                        <td>@contact.Phone</td>
+                        <td>@contact.Salary</td>
+                        <td>
+                            <a class="btn btn-primary" asp-action="UpdateContact" asp-route-id="@contact.Id">Edit</a>
+                            <button class="btn btn-danger" onclick="deleteContact('@contact.Id')">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Sort Table
+    function sortTable(columnIndex) {
+        const table = document.getElementById("contactsTable");
+        const rows = Array.from(table.rows).slice(1); // Skip the header row
+        const isAscending = table.getAttribute("data-sort-asc") === "true";
+        table.setAttribute("data-sort-asc", !isAscending);
+
+        rows.sort((a, b) => {
+            const cellA = a.cells[columnIndex].innerText.toLowerCase();
+            const cellB = b.cells[columnIndex].innerText.toLowerCase();
+
+            if (columnIndex === 4) { // Numeric column for Salary
+                return isAscending ? cellA - cellB : cellB - cellA;
+            }
+            return isAscending
+                ? cellA.localeCompare(cellB)
+                : cellB.localeCompare(cellA);
+        });
+
+        rows.forEach(row => table.tBodies[0].appendChild(row));
+    }
+
+    // Filter Table
+    function filterTable() {
+        const filterName = document.getElementById("filterName").value.toLowerCase();
+        const filterPhone = document.getElementById("filterPhone").value.toLowerCase();
+        const filterSalary = document.getElementById("filterSalary").value;
+        const filterDateOfBirth = document.getElementById("filterDateOfBirth").value; // Date in yyyy-MM-dd format
+        const filterMarried = document.getElementById("filterMarried").value.toLowerCase();
+
+        const table = document.getElementById("contactsTable");
+        const rows = table.getElementsByTagName("tr");
+
+        Array.from(rows).forEach((row, index) => {
+            // Skip the header row
+            if (index === 0) return;
+
+            const [name, dateOfBirth, married, phone, salary] = row.cells;
+
+            const matchesName = name && name.innerText.toLowerCase().includes(filterName);
+            const matchesPhone = phone && phone.innerText.toLowerCase().includes(filterPhone);
+            const matchesSalary = salary && salary.innerText.includes(filterSalary);
+            const matchesDateOfBirth = !filterDateOfBirth || (dateOfBirth && dateOfBirth.innerText === filterDateOfBirth);
+            const matchesMarried = !filterMarried || (married && married.innerText.toLowerCase() === filterMarried);
+
+            if (matchesName && matchesPhone && matchesSalary && matchesDateOfBirth && matchesMarried) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    }
+
+    // Attach Event Listeners
+    document.getElementById("filterName").addEventListener("input", filterTable);
+    document.getElementById("filterPhone").addEventListener("input", filterTable);
+    document.getElementById("filterSalary").addEventListener("input", filterTable);
+
+    // Delete Contact
+    async function deleteContact(id) {
+        if (confirm("Are you sure you want to delete this contact?")) {
+            const response = await fetch(`/Home/DeleteById/${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                alert('Failed to delete the contact.');
+            }
+        }
+    }
+</script>
+
