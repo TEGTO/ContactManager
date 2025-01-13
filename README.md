@@ -5,6 +5,7 @@
 
 - **Api Url**:  
 [https://contactmanager-api-germanywestcentral-001.azurewebsites.net/contacts](https://contactmanager-api-germanywestcentral-001.azurewebsites.net/contacts)
+> **Note:** May take a few minutes to load on the first request if the server has been idle.
 
 ## Installation Guide
 
